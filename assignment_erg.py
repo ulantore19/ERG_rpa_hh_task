@@ -37,7 +37,7 @@ def get_skills(sp):
         except BaseException:
             pass
 
-    # Возвращаем как сроку состоящий из навыков
+    # Возвращаем как строку состоящий из навыков
     return ", ".join(list_of_skills)
 
 
@@ -90,8 +90,11 @@ def main(url, db_name, user_agent):
 
     soup = get_soup(url, user_agent=user_agent)
     jobs = soup.select(
-        "div.vacancy-serp-content div[class='vacancy-serp-item']"
+        "div.vacancy-serp-content div[class='serp-item']"
     )
+
+    if len(jobs) == 0:  # Проверяем пустая ли страница
+        return True
 
     for job in jobs:
         vacancy = job.find(
@@ -149,9 +152,18 @@ if __name__ == "__main__":
     ]
     agent = choice(user_agents)
 
-    url = "https://hh.kz/search/vacancy?area=160&search_field=name&search_field=company_name&search_field=description" \
-          "&text=python&from=suggest_post&hhtmFrom=vacancy_search_list" + "&items_per_page=40 "
     db_name = "ass_test.db"
-
     create_db(db_name)
-    main(url, db_name, agent)
+
+    page_number = 1
+    while True:
+
+        url = f"https://hh.kz/search/vacancy?area=160&search_field=name&search_field=company_name&search_field=description&text=python&from=suggest_post&page={page_number}&hhtmFrom=vacancy_search_list"
+
+        is_empty = main(url, db_name, agent)
+
+        if is_empty: break  # Если страница пуста, то парсинг заканчиается
+
+        page_number += 1
+
+    print("Парсинг данных завершен!!!")
